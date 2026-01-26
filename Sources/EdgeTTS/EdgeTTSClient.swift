@@ -55,6 +55,8 @@ public final class EdgeTTSClient: @unchecked Sendable {
 
         var request = URLRequest(url: url)
         EdgeTTSConstants.voiceHeaders.forEach { request.addValue($0.value, forHTTPHeaderField: $0.key) }
+        // Add MUID cookie (matches Python edge-tts implementation)
+        request.addValue("muid=\(EdgeTTSConstants.generateMUID());", forHTTPHeaderField: "Cookie")
         request.timeoutInterval = connectTimeout
 
         do {
@@ -169,6 +171,8 @@ public final class EdgeTTSClient: @unchecked Sendable {
             request.timeoutInterval = receiveTimeout
             request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
             EdgeTTSConstants.wssHeaders.forEach { request.addValue($0.value, forHTTPHeaderField: $0.key) }
+            // Add MUID cookie (matches Python edge-tts implementation)
+            request.addValue("muid=\(EdgeTTSConstants.generateMUID());", forHTTPHeaderField: "Cookie")
             request.addValue("synthesize", forHTTPHeaderField: "Sec-WebSocket-Protocol")
 
             let websocket = wsSession.webSocketTask(with: request)
@@ -355,6 +359,8 @@ public final class EdgeTTSClient: @unchecked Sendable {
 
         var request = URLRequest(url: url)
         EdgeTTSConstants.voiceHeaders.forEach { request.addValue($0.value, forHTTPHeaderField: $0.key) }
+        // Add MUID cookie (matches Python edge-tts implementation)
+        request.addValue("muid=\(EdgeTTSConstants.generateMUID());", forHTTPHeaderField: "Cookie")
         request.timeoutInterval = connectTimeout
 
         let config = URLSessionConfiguration.ephemeral

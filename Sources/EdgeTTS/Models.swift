@@ -94,9 +94,9 @@ public struct TTSConfig: Sendable {
     ///
     /// - Throws: ``EdgeTTSError/invalidParameter(_:)`` when a field does not match the expected format.
     private mutating func validate() throws {
-        let voicePattern = #"^[A-Za-z0-9][A-Za-z0-9\s\-\(\),]+$"#
-        guard voice.range(of: voicePattern, options: .regularExpression) != nil else {
-            throw EdgeTTSError.invalidParameter("Voice must match Microsoft voice format")
+        // More permissive voice validation - just check it's not empty
+        guard !voice.isEmpty else {
+            throw EdgeTTSError.invalidParameter("Voice cannot be empty")
         }
         guard rate.range(of: #"^[\+\-]\d+%$"#, options: .regularExpression) != nil else {
             throw EdgeTTSError.invalidParameter("Rate must be like +0% or -50%")
