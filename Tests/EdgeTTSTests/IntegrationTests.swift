@@ -13,4 +13,13 @@ final class IntegrationTests: XCTestCase {
         XCTAssertFalse(audio.isEmpty, "Expected synthesized audio data.")
         print("Synthesis took \(Date().timeIntervalSince(start))s, bytes: \(audio.count)")
     }
+
+  func testSynthesizeReturnsAudioAndTimecode() async throws {
+    let start = Date()
+    let client = EdgeTTSClient()
+    let audioAndCodes = try await client.synthesizeWithWordTimecodes(text: "Hello from Edge TTS integration test.")
+    XCTAssertEqual(audioAndCodes.timecodes.count, 6)
+    XCTAssert(!audioAndCodes.audioData.isEmpty)
+    print("Synthesis took \(Date().timeIntervalSince(start))s, bytes: \(audioAndCodes.audioData.count)")
+  }
 }

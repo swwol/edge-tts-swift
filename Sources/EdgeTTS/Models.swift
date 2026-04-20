@@ -148,6 +148,51 @@ public enum StreamEvent {
     case boundary(type: Boundary, offset: Int64, duration: Int64, text: String)
 }
 
+/// A word-level timecode from TTS synthesis, suitable for persistence.
+///
+/// Offsets and durations use the same 100-nanosecond tick unit returned by the
+/// Edge TTS service. Convenience properties ``offsetSeconds`` and
+/// ``durationSeconds`` convert to seconds.
+///
+/// ```swift
+/// let result = try await client.synthesizeWithWordTimecodes(text: "Hello world")
+/// for tc in result.timecodes {
+///     print("\(tc.text) at \(tc.offsetSeconds)s")
+/// }
+/// ```
+public struct WordTimecode: Codable, Sendable, Equatable {
+    /// Offset from the start of the audio in 100-nanosecond units.
+    public let offset: Int64
+    /// Duration of the word in 100-nanosecond units.
+    public let duration: Int64
+
+    /// Offset from the start of the audio in seconds.
+    public var offsetSeconds: Double {
+        Double(offset) / 10_000_000
+    }
+
+    /// Duration of the word in seconds.
+    public var durationSeconds: Double {
+        Double(duration) / 10_000_000
+    }
+}
+
+/// The complete result of a TTS synthesis with word-level timecodes.
+///
+/// Conforms to ``Codable`` so it can be serialized to JSON or another format for persistence.
+///
+/// ```swift
+/// let result = try await client.synthesizeWithWordTimecodes(text: "Hello world")
+/// let json = try JSONEncoder().encode(result)
+/// try json.write(to: URL(fileURLWithPath: "result.json"))
+/// ```
+public struct TTSResult: Codable, Sendable {
+    /// The complete synthesized audio data.
+    public let audioData: Data
+    /// Word-level timecodes aligned to ``audioData``.
+    public let timecodes: [WordTimecode]
+}
+
 /// Additional metadata describing a voice (categories and personalities).
 ///
 /// This mirrors the service payload under the `VoiceTag` key.

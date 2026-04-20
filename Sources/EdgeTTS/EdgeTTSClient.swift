@@ -88,6 +88,59 @@ public final class EdgeTTSClient: @unchecked Sendable {
         }
     }
 
+    /// Synthesizes text, streaming audio and word timecodes as they arrive,
+    /// then returns the complete audio and timecodes in a persistable ``TTSResult``.
+    ///
+    /// The config's ``TTSConfig/boundary`` is forced to ``Boundary/word`` so that
+    /// the service emits word-level metadata.
+    ///
+    /// ```swift
+    /// let client = EdgeTTSClient()
+    /// let result = try await client.synthesizeWithWordTimecodes(
+    ///     text: "Hello world"
+    /// ) { event in
+    ///     switch event {
+    ///     case .audio(let chunk): player.enqueue(chunk)
+    ///     case .boundary(_, _, _, let word): print(word)
+    ///     }
+    /// }
+    /// let json = try JSONEncoder().encode(result)
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - text: The text to synthesize.
+    ///   - config: Synthesis configuration. The ``TTSConfig/boundary`` field is overridden to ``Boundary/word``.
+    ///   - outputFormat: The Edge output format string (for example, `audio-24khz-48kbitrate-mono-mp3`).
+    ///   - onEvent: Optional closure invoked for every ``StreamEvent`` as it arrives.
+    /// - Returns: A ``TTSResult`` containing the accumulated audio data and word-level timecodes.
+    /// - Throws: Any error produced by the underlying WebSocket stream.
+    public func synthesizeWithWordTimecodes(
+        text: String,
+        config: TTSConfig = try! TTSConfig(),
+        outputFormat: String = "audio-24khz-48kbitrate-mono-mp3",
+        onEvent: (@Sendable (StreamEvent) -> Void)? = nil
+    ) async throws -> TTSResult {
+        var wordConfig = config
+        wordConfig.boundary = .word
+
+        var audioData = Data()
+        var timecodes: [WordTimecode] = []
+
+        for try await event in stream(text: text, config: wordConfig, outputFormat: outputFormat) {
+            switch event {
+            case .audio(let chunk):
+                audioData.append(chunk)
+            case .boundary(let type, let offset, let duration, _):
+                if type == .word {
+                    timecodes.append(WordTimecode(offset: offset, duration: duration))
+                }
+            }
+            onEvent?(event)
+        }
+
+        return TTSResult(audioData: audioData, timecodes: timecodes)
+    }
+
     /// Synthesizes text into a single audio buffer.
     ///
     /// This is a convenience wrapper over ``stream(text:config:outputFormat:)`` that collects
