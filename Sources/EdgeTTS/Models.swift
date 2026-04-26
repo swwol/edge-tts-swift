@@ -165,6 +165,8 @@ public struct WordTimecode: Codable, Sendable, Equatable {
     public let offset: Int64
     /// Duration of the word in 100-nanosecond units.
     public let duration: Int64
+    /// The word text spoken at this timecode.
+    public let text: String
 
     /// Offset from the start of the audio in seconds.
     public var offsetSeconds: Double {
@@ -174,6 +176,19 @@ public struct WordTimecode: Codable, Sendable, Equatable {
     /// Duration of the word in seconds.
     public var durationSeconds: Double {
         Double(duration) / 10_000_000
+    }
+
+    public init(offset: Int64, duration: Int64, text: String = "") {
+        self.offset = offset
+        self.duration = duration
+        self.text = text
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        offset = try container.decode(Int64.self, forKey: .offset)
+        duration = try container.decode(Int64.self, forKey: .duration)
+        text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
     }
 }
 

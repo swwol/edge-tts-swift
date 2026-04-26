@@ -130,9 +130,9 @@ public final class EdgeTTSClient: @unchecked Sendable {
             switch event {
             case .audio(let chunk):
                 audioData.append(chunk)
-            case .boundary(let type, let offset, let duration, _):
+            case .boundary(let type, let offset, let duration, let text):
                 if type == .word {
-                    timecodes.append(WordTimecode(offset: offset, duration: duration))
+                    timecodes.append(WordTimecode(offset: offset, duration: duration, text: text))
                 }
             }
             onEvent?(event)
